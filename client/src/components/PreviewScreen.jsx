@@ -91,7 +91,10 @@ export default function PreviewScreen({
 
   const runExport = async (mode) => {
     if (!publicId) {
-      setStatus({ type: 'error', message: 'Cloudinary upload required to export.' });
+      setStatus({
+        type: 'error',
+        message: 'Video upload is not ready yet. Wait for upload to finish.',
+      });
       return;
     }
     if (clips.length === 0) {

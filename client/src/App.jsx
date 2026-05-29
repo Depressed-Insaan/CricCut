@@ -8,6 +8,7 @@ import {
   defaultClipRange,
   normalizeClip,
 } from './constants.js';
+import { apiUrl } from './apiBase.js';
 import { formatTime } from './utils/time.js';
 import './App.css';
 
@@ -25,20 +26,12 @@ export default function App() {
 
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [cloudinaryReady, setCloudinaryReady] = useState(false);
   const [publicId, setPublicId] = useState(null);
 
   const [clips, setClips] = useState([]);
   const [draft, setDraft] = useState(null);
   const [selectedClipId, setSelectedClipId] = useState(null);
   const [status, setStatus] = useState({ type: 'info', message: '' });
-
-  useEffect(() => {
-    fetch('/api/health')
-      .then((r) => r.json())
-      .then((data) => setCloudinaryReady(Boolean(data.cloudinary)))
-      .catch(() => setCloudinaryReady(false));
-  }, []);
 
   useEffect(() => {
     return () => {
@@ -76,13 +69,6 @@ export default function App() {
     setLocalUrl(url);
     setFileName(file.name);
 
-    if (!cloudinaryReady) {
-      setWarn(
-        'Preview ready. Add Cloudinary credentials in server/.env to export.'
-      );
-      return;
-    }
-
     setUploading(true);
     setUploadProgress(10);
     setInfo('Uploading match footage to Cloudinary…');
@@ -110,7 +96,7 @@ export default function App() {
         xhr.addEventListener('error', () =>
           reject(new Error('Network error during upload'))
         );
-        xhr.open('POST', '/api/upload');
+        xhr.open('POST', apiUrl('/api/upload'));
         xhr.send(formData);
       });
 
@@ -446,11 +432,6 @@ export default function App() {
             >
               Preview &amp; export
             </button>
-            {!publicId && !cloudinaryReady && (
-              <p className="upload-hint" style={{ margin: 0 }}>
-                Configure server/.env with Cloudinary keys to export.
-              </p>
-            )}
           </section>
         </>
       )}

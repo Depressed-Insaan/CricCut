@@ -1,5 +1,7 @@
+import { apiUrl } from './apiBase.js';
+
 export async function exportStitch(publicId, clips, duration) {
-  const res = await fetch('/api/stitch', {
+  const res = await fetch(apiUrl('/api/stitch'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ publicId, clips, duration }),
@@ -10,7 +12,7 @@ export async function exportStitch(publicId, clips, duration) {
 }
 
 export async function exportIndividualClips(publicId, clips, duration) {
-  const res = await fetch('/api/export-clips', {
+  const res = await fetch(apiUrl('/api/export-clips'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ publicId, clips, duration }),

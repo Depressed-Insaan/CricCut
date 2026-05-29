@@ -30,9 +30,12 @@ A mobile-friendly React app for building cricket highlight reels. Upload a match
 
    ```bash
    copy .env.example server\.env
+   copy client\.env.example client\.env
    ```
 
    Edit `server/.env` with your Cloudinary **Cloud name**, **API Key**, and **API Secret** from the [Cloudinary Console](https://cloudinary.com/console).
+
+   Set `VITE_API_URL` in `client/.env` to your API origin (e.g. `http://localhost:3001` for local dev, or your production API URL).
 
 3. Run development (client + API):
 

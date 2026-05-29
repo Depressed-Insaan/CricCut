@@ -1,10 +1,11 @@
+import { apiUrl } from '../apiBase.js';
+
 /**
- * Trigger a file download via same-origin URL (server sets Content-Disposition).
- * Avoids cross-origin fetch/CORS issues with Cloudinary URLs.
+ * Trigger a file download via the API (server sets Content-Disposition).
  */
-export function forceDownload(downloadUrl, filename) {
+export function forceDownload(downloadPath, filename) {
   const a = document.createElement('a');
-  a.href = downloadUrl;
+  a.href = apiUrl(downloadPath);
   a.download = filename || 'download.mp4';
   a.rel = 'noopener';
   a.style.display = 'none';
@@ -17,7 +18,7 @@ export function forceDownload(downloadUrl, filename) {
  * POST JSON to a download endpoint and save the streamed file.
  */
 export async function forceDownloadPost(apiPath, body, filename) {
-  const res = await fetch(apiPath, {
+  const res = await fetch(apiUrl(apiPath), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
