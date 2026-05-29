@@ -44,10 +44,10 @@ export default function ThreeBackground() {
     };
     resize();
 
-    const ambient = new THREE.AmbientLight(0xffffff, 0.55);
+    const ambient = new THREE.AmbientLight(0xffffff, 0.85);
     scene.add(ambient);
 
-    const key = new THREE.DirectionalLight(0x22c55e, 1.15);
+    const key = new THREE.DirectionalLight(0x22c55e, 1.8);
     key.position.set(3, 4, 2);
     scene.add(key);
 

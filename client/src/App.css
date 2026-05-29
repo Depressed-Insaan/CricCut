@@ -19,14 +19,14 @@
 .three-bg {
   position: fixed;
   inset: 0;
-  z-index: 0;
+  z-index: -1;
   pointer-events: none;
 }
 
 .bg-overlay {
   position: fixed;
   inset: 0;
-  z-index: 1;
+  z-index: -1;
   pointer-events: none;
   background:
     radial-gradient(1200px 520px at 50% -10%, rgba(34, 197, 94, 0.18), transparent 60%),
