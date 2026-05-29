@@ -233,9 +233,7 @@ export default function App() {
       <div className="app">
         <header className="header header--compact">
           <h1 className="logo">
-            <span className="logo-icon" aria-hidden>
-              🏏
-            </span>
+            <img className="logo-img" src="/logo.png" alt="" />
             CricCut
           </h1>
         </header>
@@ -261,9 +259,7 @@ export default function App() {
     <div className="app">
       <header className="header">
         <h1 className="logo">
-          <span className="logo-icon" aria-hidden>
-            🏏
-          </span>
+          <img className="logo-img" src="/logo.png" alt="" />
           CricCut
         </h1>
         <p className="tagline">
