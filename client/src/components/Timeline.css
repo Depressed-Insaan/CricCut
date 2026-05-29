@@ -1,0 +1,115 @@
+.timeline {
+  margin-top: 1rem;
+}
+
+.timeline--empty p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.timeline-label {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.timeline-times {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--green-bright);
+  margin-bottom: 0.35rem;
+}
+
+.timeline-times-mid {
+  color: var(--text-muted);
+}
+
+.timeline-track {
+  position: relative;
+  height: 44px;
+  touch-action: none;
+  cursor: pointer;
+  user-select: none;
+}
+
+.timeline-track-bg {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 8px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.timeline-range {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 12px;
+  background: linear-gradient(90deg, var(--green-dim), var(--green));
+  border-radius: 4px;
+  box-shadow: 0 0 12px var(--green-glow);
+  pointer-events: none;
+}
+
+.timeline-playhead {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  width: 2px;
+  margin-left: -1px;
+  background: #fff;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.6);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.timeline-handle {
+  position: absolute;
+  top: 50%;
+  width: 22px;
+  height: 36px;
+  margin-left: -11px;
+  margin-top: -18px;
+  padding: 0;
+  border: 2px solid var(--green-bright);
+  border-radius: 6px;
+  background: var(--bg-card);
+  cursor: grab;
+  z-index: 3;
+  touch-action: none;
+}
+
+.timeline-handle:active {
+  cursor: grabbing;
+  background: var(--green-dim);
+}
+
+.timeline-handle--start::after,
+.timeline-handle--end::after {
+  content: '';
+  display: block;
+  width: 2px;
+  height: 14px;
+  margin: 8px auto;
+  background: var(--green-bright);
+  border-radius: 1px;
+}
+
+.timeline-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.25rem;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
