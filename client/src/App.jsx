@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import ThreeBackground from './components/ThreeBackground.jsx';
 import PreviewScreen from './components/PreviewScreen.jsx';
 import ClipList from './components/ClipList.jsx';
 import TagSelector from './components/TagSelector.jsx';
@@ -15,6 +16,8 @@ import './App.css';
 const VIEWS = { EDITOR: 'editor', PREVIEW: 'preview' };
 
 export default function App() {
+  const revealObserverRef = useRef(null);
+  const uploadSectionRef = useRef(null);
   const videoRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -33,11 +36,36 @@ export default function App() {
   const [selectedClipId, setSelectedClipId] = useState(null);
   const [status, setStatus] = useState({ type: 'info', message: '' });
 
+  const apiBaseHint = useMemo(() => import.meta.env.VITE_API_URL ?? '', []);
+
   useEffect(() => {
     return () => {
       if (localUrl) URL.revokeObjectURL(localUrl);
     };
   }, [localUrl]);
+
+  useEffect(() => {
+    const targets = Array.from(document.querySelectorAll('[data-reveal]'));
+    if (targets.length === 0) return;
+
+    revealObserverRef.current?.disconnect();
+
+    const obs = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            obs.unobserve(entry.target);
+          }
+        }
+      },
+      { threshold: 0.18, rootMargin: '0px 0px -8% 0px' }
+    );
+
+    for (const t of targets) obs.observe(t);
+    revealObserverRef.current = obs;
+    return () => obs.disconnect();
+  }, [view, localUrl]);
 
   const setError = (message) => setStatus({ type: 'error', message });
   const setInfo = (message) => setStatus({ type: 'info', message });
@@ -228,14 +256,25 @@ export default function App() {
     setInfo('');
   };
 
+  const scrollToUpload = () => {
+    uploadSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   if (view === VIEWS.PREVIEW && localUrl) {
     return (
-      <div className="app">
-        <header className="header header--compact">
-          <h1 className="logo">
-            <img className="logo-img" src="/logo.png" alt="" />
-            CricCut
-          </h1>
+      <div className="app app--immersive">
+        <ThreeBackground />
+        <div className="bg-overlay" aria-hidden />
+        <header className="header header--compact header--floating">
+          <div className="topbar">
+            <h1 className="logo">
+              <img className="logo-img" src="/logo.png" alt="CricCut logo" />
+              CricCut
+            </h1>
+            <button type="button" className="pill" onClick={scrollToUpload}>
+              Upload
+            </button>
+          </div>
         </header>
         {status.message && (
           <div className={`status-bar ${status.type}`} role="status">
@@ -256,36 +295,116 @@ export default function App() {
   }
 
   return (
-    <div className="app">
-      <header className="header">
-        <h1 className="logo">
-          <img className="logo-img" src="/logo.png" alt="" />
-          CricCut
-        </h1>
-        <p className="tagline">
-          Mark moments, drag in/out points on the timeline, tag clips, and export.
-        </p>
+    <div className="app app--immersive">
+      <ThreeBackground />
+      <div className="bg-overlay" aria-hidden />
+
+      <header className="header header--floating">
+        <div className="topbar">
+          <h1 className="logo">
+            <img className="logo-img" src="/logo.png" alt="CricCut logo" />
+            CricCut
+          </h1>
+          <div className="topbar-actions">
+            <button type="button" className="pill" onClick={scrollToUpload}>
+              Get Started
+            </button>
+          </div>
+        </div>
       </header>
 
-      {!localUrl && (
-        <section className="card">
-          <h2 className="card-title">Upload match video</h2>
-          <div className="upload-zone">
-            <input
-              ref={fileInputRef}
-              id="video-upload"
-              type="file"
-              accept="video/*"
-              onChange={(e) => handleFile(e.target.files?.[0])}
-            />
-            <label className="upload-label" htmlFor="video-upload">
-              Choose video
-            </label>
-            <p className="upload-hint">
-              MP4, MOV, WebM — up to 500 MB. Works great on mobile.
+      <main className="page">
+        <section className="hero">
+          <div className="hero-inner">
+            <div className="hero-badge" data-reveal>
+              Premium highlight engine
+            </div>
+            <div className="hero-brand" data-reveal>
+              <img
+                className="hero-logo"
+                src="/logo.png"
+                alt="CricCut"
+                width={140}
+                height={140}
+              />
+            </div>
+            <h2 className="hero-title" data-reveal>
+              <span className="hero-title-glow">Every six deserves a replay</span>
+            </h2>
+            <p className="hero-subtitle" data-reveal>
+              Cut, tag, reorder, and export cricket highlights with a cinematic feel.
+              Built for mobile. Powered by Cloudinary.
             </p>
+
+            <div className="hero-cta" data-reveal>
+              <button type="button" className="cta" onClick={scrollToUpload}>
+                Get Started
+                <span className="cta-pulse" aria-hidden />
+              </button>
+              <a className="cta-secondary" href="#upload">
+                Learn more
+              </a>
+            </div>
           </div>
         </section>
+
+      {!localUrl && (
+        <>
+          <section className="features">
+            <div className="grid">
+              <div className="feature" data-reveal>
+                <div className="feature-kicker">Trim</div>
+                <div className="feature-title">Drag precise in/out points</div>
+                <div className="feature-body">
+                  Mark a moment, then drag the handles for frame-tight cuts.
+                </div>
+              </div>
+              <div className="feature" data-reveal>
+                <div className="feature-kicker">Tag</div>
+                <div className="feature-title">Six · Wicket · Catch</div>
+                <div className="feature-body">
+                  Label the hype instantly, or add a custom callout.
+                </div>
+              </div>
+              <div className="feature" data-reveal>
+                <div className="feature-kicker">Export</div>
+                <div className="feature-title">Clips or a stitched reel</div>
+                <div className="feature-body">
+                  Reorder like a pro edit—then download with one click.
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section
+            ref={uploadSectionRef}
+            id="upload"
+            className="card glass"
+            data-reveal
+          >
+            <h2 className="card-title">Upload match video</h2>
+            <div className="upload-zone upload-zone--glass">
+              <input
+                ref={fileInputRef}
+                id="video-upload"
+                type="file"
+                accept="video/*"
+                onChange={(e) => handleFile(e.target.files?.[0])}
+              />
+              <label className="upload-label upload-label--glass" htmlFor="video-upload">
+                Choose video
+              </label>
+              <p className="upload-hint">
+                MP4, MOV, WebM — up to 500 MB. Runs smoothly on mobile.
+              </p>
+              {!!apiBaseHint && (
+                <p className="upload-hint upload-hint--subtle">
+                  API: {apiBaseHint}
+                </p>
+              )}
+            </div>
+          </section>
+        </>
       )}
 
       {status.message && (
@@ -310,7 +429,7 @@ export default function App() {
 
       {localUrl && (
         <>
-          <section className="card">
+          <section className="card" id="upload" ref={uploadSectionRef}>
             <h2 className="card-title">{fileName || 'Match video'}</h2>
             <div className="player-wrap">
               <video
@@ -431,6 +550,7 @@ export default function App() {
           </section>
         </>
       )}
+      </main>
     </div>
   );
 }
