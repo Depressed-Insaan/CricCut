@@ -46,8 +46,8 @@ export default function ClipList({
           onDragOver={handleDragOver}
           onDrop={(e) => handleDrop(e, index)}
         >
-          <span className="drag-handle" aria-hidden title="Drag to reorder">
-            ⋮⋮
+          <span className="drag-handle material-symbols-outlined" aria-hidden title="Drag to reorder">
+            drag_indicator
           </span>
           <button
             type="button"
@@ -68,7 +68,7 @@ export default function ClipList({
             onClick={() => onRemove(clip.id)}
             aria-label={`Remove ${clipLabel(clip)} clip`}
           >
-            Remove
+            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
           </button>
         </li>
       ))}
