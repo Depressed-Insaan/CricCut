@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import ThreeBackground from './components/ThreeBackground.jsx';
 import PreviewScreen from './components/PreviewScreen.jsx';
 import ClipList from './components/ClipList.jsx';
@@ -290,6 +291,7 @@ export default function App() {
           onClipsChange={setClips}
           setStatus={setStatus}
         />
+        <Analytics />
       </div>
     );
   }
@@ -551,6 +553,7 @@ export default function App() {
         </>
       )}
       </main>
+      <Analytics />
     </div>
   );
 }
