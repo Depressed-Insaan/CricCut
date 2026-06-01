@@ -5,7 +5,7 @@
   "description": "Cricket highlight reel maker — mark moments, stitch clips with Cloudinary",
   "scripts": {
     "dev": "concurrently -n server,client -c green,cyan \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
-    "build": "npm run build --prefix client",
+    "build": "npm install --prefix client && npm run build --prefix client",
     "start": "npm run start --prefix server"
   },
   "devDependencies": {
