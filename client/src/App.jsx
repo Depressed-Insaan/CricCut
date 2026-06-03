@@ -4,6 +4,7 @@ import PreviewScreen from './components/PreviewScreen.jsx';
 import ClipList from './components/ClipList.jsx';
 import TagSelector from './components/TagSelector.jsx';
 import Timeline from './components/Timeline.jsx';
+import AIAnalysis from './components/AIAnalysis.jsx';
 import {
   createClipId,
   defaultClipRange,
@@ -225,6 +226,30 @@ export default function App() {
   const removeClip = (id) => {
     setClips((prev) => prev.filter((c) => c.id !== id));
     if (selectedClipId === id) setSelectedClipId(null);
+  };
+
+  const handleAIHighlights = (highlights) => {
+    if (!highlights || highlights.length === 0) {
+      setWarn('No matching moments found. Try a different description.');
+      return;
+    }
+
+    const newClips = highlights.map((h) => {
+      const tag = 'Six';
+      return normalizeClip(
+        {
+          id: createClipId(),
+          tag,
+          customLabel: h.description || '',
+          start: h.startTime,
+          end: h.endTime,
+        },
+        duration
+      );
+    });
+
+    setClips((prev) => [...prev, ...newClips]);
+    setInfo(`AI detected ${newClips.length} highlight${newClips.length !== 1 ? 's' : ''}. Review and adjust as needed.`);
   };
 
   const handleReorder = (from, to) => {
@@ -509,6 +534,16 @@ export default function App() {
               hidden
               onChange={(e) => handleFile(e.target.files?.[0])}
             />
+
+            {publicId && duration != null && (
+              <section className="card">
+                <AIAnalysis
+                  videoUrl={`https://res.cloudinary.com/criccut/video/upload/${publicId}.mp4`}
+                  onHighlightsDetected={handleAIHighlights}
+                  isLoading={uploading}
+                />
+              </section>
+            )}
 
             {(draft || selectedClipId) && activeRange && (
               <div className="clip-editor-panel">
