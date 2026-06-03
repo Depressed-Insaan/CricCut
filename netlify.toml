@@ -1,5 +1,5 @@
 [build]
-  command = "npm run build"
+  command = "npm ci && npm ci --prefix client && npm run build --prefix client"
   publish = "client/dist"
 
 [context.production.environment]
