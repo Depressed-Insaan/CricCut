@@ -235,7 +235,7 @@ export default function App() {
     }
 
     const newClips = highlights.map((h) => {
-      const tag = 'Six';
+      const tag = h.tag || 'Custom';
       return normalizeClip(
         {
           id: createClipId(),
