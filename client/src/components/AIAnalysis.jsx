@@ -4,13 +4,16 @@ import './AIAnalysis.css';
 export default function AIAnalysis({ videoUrl, onHighlightsDetected, isLoading: parentIsLoading }) {
   const [userPrompt, setUserPrompt] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [suggestions, setSuggestions] = useState([
+  const suggestions = [
     'Show me sixes',
     'Show me wickets',
     'Show me boundaries',
     'Show me fours',
     'Show me good catches',
-  ]);
+  ];
+
+  const notReady = !videoUrl;
+  const busy = isLoading || parentIsLoading;
 
   const handleAnalyze = async () => {
     if (!userPrompt.trim() || !videoUrl) return;
@@ -63,19 +66,25 @@ export default function AIAnalysis({ videoUrl, onHighlightsDetected, isLoading: 
           placeholder="What moments do you want? (e.g., 'Show me only sixes', 'Find all wickets', 'Show boundaries')"
           value={userPrompt}
           onChange={(e) => setUserPrompt(e.target.value)}
-          disabled={isLoading || parentIsLoading}
+          disabled={busy || notReady}
           rows="2"
         />
         <button
           className="ai-analyze-btn"
           onClick={handleAnalyze}
-          disabled={!userPrompt.trim() || isLoading || parentIsLoading || !videoUrl}
+          disabled={!userPrompt.trim() || busy || notReady}
         >
-          {isLoading ? 'Analyzing...' : 'Analyze Video'}
+          {isLoading ? 'Analyzing...' : parentIsLoading ? 'Uploading...' : 'Analyze Video'}
         </button>
       </div>
 
-      {!userPrompt && (
+      {notReady && !parentIsLoading && (
+        <p className="info-text" style={{ color: 'var(--warn, #f59e0b)', marginTop: '0.5rem' }}>
+          Video must finish uploading to Cloudinary before AI analysis is available.
+        </p>
+      )}
+
+      {!userPrompt && !notReady && (
         <div className="ai-suggestions">
           <p className="suggestions-label">Quick suggestions:</p>
           <div className="suggestions-grid">
@@ -84,7 +93,7 @@ export default function AIAnalysis({ videoUrl, onHighlightsDetected, isLoading: 
                 key={suggestion}
                 className="suggestion-btn"
                 onClick={() => handleSuggestion(suggestion)}
-                disabled={isLoading || parentIsLoading}
+                disabled={busy || notReady}
               >
                 {suggestion}
               </button>

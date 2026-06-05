@@ -535,10 +535,10 @@ export default function App() {
               onChange={(e) => handleFile(e.target.files?.[0])}
             />
 
-            {publicId && duration != null && (
+            {duration != null && (
               <section className="card">
                 <AIAnalysis
-                  videoUrl={`https://res.cloudinary.com/criccut/video/upload/${publicId}.mp4`}
+                  videoUrl={publicId ? `https://res.cloudinary.com/criccut/video/upload/${publicId}.mp4` : null}
                   onHighlightsDetected={handleAIHighlights}
                   isLoading={uploading}
                 />
