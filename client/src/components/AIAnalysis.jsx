@@ -21,6 +21,8 @@ export default function AIAnalysis({ videoUrl, onHighlightsDetected, isLoading: 
     setIsLoading(true);
     try {
       const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-cricket-video`;
+      console.log('Calling API:', apiUrl);
+
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
@@ -33,12 +35,29 @@ export default function AIAnalysis({ videoUrl, onHighlightsDetected, isLoading: 
         }),
       });
 
+      console.log('Response status:', response.status, response.statusText);
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Analysis failed');
+        let errorMessage = 'Analysis failed';
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          try {
+            const error = await response.json();
+            errorMessage = error.message || error.error || errorMessage;
+          } catch {
+            errorMessage = `Server error (${response.status})`;
+          }
+        } else {
+          const text = await response.text();
+          errorMessage = `Server error (${response.status}): ${text.substring(0, 100)}`;
+        }
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
+      if (!data.highlights) {
+        throw new Error('Invalid response from server');
+      }
       onHighlightsDetected(data.highlights);
       setUserPrompt('');
     } catch (error) {
