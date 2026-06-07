@@ -29,73 +29,101 @@ function inferTagFromPrompt(prompt: string): string {
 }
 
 async function uploadVideoToGemini(videoUrl: string, geminiKey: string): Promise<string> {
-  const videoResponse = await fetch(videoUrl);
-  if (!videoResponse.ok) {
-    throw new Error(`Failed to fetch video: ${videoResponse.statusText}`);
-  }
+  try {
+    const videoResponse = await fetch(videoUrl);
+    if (!videoResponse.ok) {
+      throw new Error(`Failed to fetch video: ${videoResponse.statusText}`);
+    }
 
-  const videoBuffer = await videoResponse.arrayBuffer();
-  const contentType = videoResponse.headers.get("content-type") || "video/mp4";
-  const fileSize = videoBuffer.byteLength;
+    const videoBuffer = await videoResponse.arrayBuffer();
+    const contentType = videoResponse.headers.get("content-type") || "video/mp4";
+    const fileSize = videoBuffer.byteLength;
 
-  const initResponse = await fetch(
-    `https://generativelanguage.googleapis.com/upload/v1beta/files?key=${geminiKey}`,
-    {
+    console.log(`Uploading video (${fileSize} bytes) to Gemini Files API...`);
+
+    const initResponse = await fetch(
+      `https://generativelanguage.googleapis.com/upload/v1beta/files?key=${geminiKey}`,
+      {
+        method: "POST",
+        headers: {
+          "X-Goog-Upload-Protocol": "resumable",
+          "X-Goog-Upload-Command": "start",
+          "X-Goog-Upload-Header-Content-Length": String(fileSize),
+          "X-Goog-Upload-Header-Content-Type": contentType,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ file: { display_name: "cricket_video" } }),
+      }
+    );
+
+    if (!initResponse.ok) {
+      const errText = await initResponse.text();
+      throw new Error(`Failed to initiate upload: ${errText.substring(0, 200)}`);
+    }
+
+    const uploadUrl = initResponse.headers.get("x-goog-upload-url");
+    if (!uploadUrl) {
+      throw new Error("No upload URL returned from Gemini Files API");
+    }
+
+    console.log("Uploading video data...");
+
+    const uploadResponse = await fetch(uploadUrl, {
       method: "POST",
       headers: {
-        "X-Goog-Upload-Protocol": "resumable",
-        "X-Goog-Upload-Command": "start",
-        "X-Goog-Upload-Header-Content-Length": String(fileSize),
-        "X-Goog-Upload-Header-Content-Type": contentType,
-        "Content-Type": "application/json",
+        "Content-Length": String(fileSize),
+        "X-Goog-Upload-Offset": "0",
+        "X-Goog-Upload-Command": "upload, finalize",
       },
-      body: JSON.stringify({ file: { display_name: "cricket_video" } }),
+      body: videoBuffer,
+    });
+
+    if (!uploadResponse.ok) {
+      const errText = await uploadResponse.text();
+      throw new Error(`Failed to upload video: ${errText.substring(0, 200)}`);
     }
-  );
 
-  if (!initResponse.ok) {
-    throw new Error(`Failed to initiate upload: ${await initResponse.text()}`);
-  }
-
-  const uploadUrl = initResponse.headers.get("x-goog-upload-url");
-  if (!uploadUrl) {
-    throw new Error("No upload URL returned from Gemini Files API");
-  }
-
-  const uploadResponse = await fetch(uploadUrl, {
-    method: "POST",
-    headers: {
-      "Content-Length": String(fileSize),
-      "X-Goog-Upload-Offset": "0",
-      "X-Goog-Upload-Command": "upload, finalize",
-    },
-    body: videoBuffer,
-  });
-
-  if (!uploadResponse.ok) {
-    throw new Error(`Failed to upload video: ${await uploadResponse.text()}`);
-  }
-
-  const fileData = await uploadResponse.json();
-  const fileUri = fileData.file?.uri;
-  if (!fileUri) {
-    throw new Error("No file URI returned after upload");
-  }
-
-  // Poll until file is ACTIVE
-  for (let i = 0; i < 20; i++) {
-    await new Promise((r) => setTimeout(r, 3000));
-    const statusRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/${fileData.file.name}?key=${geminiKey}`
-    );
-    if (statusRes.ok) {
-      const status = await statusRes.json();
-      if (status.state === "ACTIVE") return fileUri;
-      if (status.state === "FAILED") throw new Error("Video processing failed in Gemini Files API");
+    let fileData;
+    try {
+      fileData = await uploadResponse.json();
+    } catch {
+      throw new Error("Invalid JSON response from upload finalize");
     }
-  }
 
-  throw new Error("Timed out waiting for video to be ready in Gemini");
+    const fileUri = fileData.file?.uri;
+    if (!fileUri) {
+      throw new Error("No file URI returned after upload");
+    }
+
+    console.log(`File uploaded: ${fileUri}`);
+    console.log("Waiting for video processing...");
+
+    // Poll until file is ACTIVE
+    for (let i = 0; i < 30; i++) {
+      await new Promise((r) => setTimeout(r, 2000));
+      const statusRes = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/${fileData.file.name}?key=${geminiKey}`
+      );
+
+      if (statusRes.ok) {
+        const status = await statusRes.json();
+        console.log(`File status: ${status.state}`);
+
+        if (status.state === "ACTIVE") {
+          console.log("Video ready for analysis");
+          return fileUri;
+        }
+        if (status.state === "FAILED") {
+          throw new Error("Video processing failed in Gemini Files API");
+        }
+      }
+    }
+
+    throw new Error("Timed out waiting for video to be ready in Gemini");
+  } catch (error) {
+    console.error("Video upload error:", error);
+    throw error;
+  }
 }
 
 async function analyzeWithGemini(
@@ -127,6 +155,8 @@ If no matching moments are found, return an empty array: []
 
 Criteria: ${userPrompt}`;
 
+  console.log("Calling Gemini API for analysis...");
+
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${geminiKey}`,
     {
@@ -156,18 +186,40 @@ Criteria: ${userPrompt}`;
   );
 
   if (!response.ok) {
-    throw new Error(`Gemini API error: ${await response.text()}`);
+    const errText = await response.text();
+    console.error("Gemini API error response:", errText.substring(0, 500));
+    throw new Error(`Gemini API error: ${errText.substring(0, 200)}`);
   }
 
-  const data = await response.json();
-  const textContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  let data;
+  try {
+    data = await response.json();
+  } catch (e) {
+    console.error("Failed to parse Gemini response as JSON");
+    throw new Error("Invalid JSON response from Gemini API");
+  }
 
-  if (!textContent) throw new Error("No response from Gemini");
+  const textContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!textContent) {
+    console.warn("No text content in Gemini response");
+    return [];
+  }
+
+  console.log("Gemini response received, parsing JSON...");
 
   const jsonMatch = textContent.match(/\[[\s\S]*\]/);
-  if (!jsonMatch) return [];
+  if (!jsonMatch) {
+    console.warn("Could not extract JSON array from response:", textContent.substring(0, 200));
+    return [];
+  }
 
-  const highlights = JSON.parse(jsonMatch[0]) as Highlight[];
+  let highlights;
+  try {
+    highlights = JSON.parse(jsonMatch[0]) as Highlight[];
+  } catch (e) {
+    console.error("Failed to parse extracted JSON:", e);
+    return [];
+  }
 
   // Ensure every highlight has a tag
   return highlights.map((h) => ({
@@ -198,7 +250,11 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    console.log(`Starting analysis for prompt: "${userPrompt}"`);
+
     const highlights = await analyzeWithGemini(videoUrl, userPrompt);
+
+    console.log(`Analysis complete: found ${highlights.length} highlights`);
 
     return new Response(
       JSON.stringify({ success: true, highlights }),
